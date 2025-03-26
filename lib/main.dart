@@ -191,7 +191,7 @@ class _DicePageState extends State<DicePage>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 textStyle: const TextStyle(fontSize: 20),
-                backgroundColor: Colors.blue[700],
+                backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
               ),
               child: Text(

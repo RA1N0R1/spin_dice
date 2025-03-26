@@ -43,3 +43,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Дополнения для Flutter-проекта:
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+/ios/Pods/
+/ios/Runner.xcworkspace/
+/macos/Pods/
+/macos/Runner.xcworkspace/
+/web/
+/windows/runner/build/
