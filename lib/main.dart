@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:math';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future<void> main() async {
+  // Загружаем переменные окружения перед запуском приложения
+  await dotenv.load(fileName: ".env");
   runApp(const DiceApp());
 }
 
@@ -34,7 +37,10 @@ class _DicePageState extends State<DicePage>
   int _currentDiceValue = 1;
   bool _isRolling = false;
   late AnimationController _controller;
-  final String _serverUrl = 'http://192.168.0.237:8080';
+
+  // Получаем URL сервера из переменных окружения
+  late final String _serverUrl =
+      dotenv.env['SERVER_URL'] ?? 'http://localhost:8080';
 
   @override
   void initState() {
@@ -157,7 +163,7 @@ class _DicePageState extends State<DicePage>
             color: Colors.black.withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
-          ),
+          )
         ],
       ),
       child: Stack(children: dots),
