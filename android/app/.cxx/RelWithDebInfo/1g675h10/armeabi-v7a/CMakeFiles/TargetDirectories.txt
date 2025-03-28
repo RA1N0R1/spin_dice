@@ -1,0 +1,2 @@
+C:/Users/user/Documents/Progi/.vscode/spin_dice/android/app/.cxx/RelWithDebInfo/1g675h10/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/user/Documents/Progi/.vscode/spin_dice/android/app/.cxx/RelWithDebInfo/1g675h10/armeabi-v7a/CMakeFiles/rebuild_cache.dir
