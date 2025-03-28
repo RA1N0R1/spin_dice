@@ -40,7 +40,7 @@ class _DicePageState extends State<DicePage>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300), // Быстрое вращение (300 мс)
+      duration: const Duration(milliseconds: 300),
     )..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
           setState(() {
@@ -66,7 +66,6 @@ class _DicePageState extends State<DicePage>
     _controller.reset();
     _controller.forward();
 
-    // Показываем результат через 200 мс (раньше завершения анимации)
     Future.delayed(const Duration(milliseconds: 200), () {
       setState(() {
         _currentDiceValue = _random.nextInt(6) + 1;
