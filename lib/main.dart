@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
-  // Загружаем переменные окружения перед запуском приложения
   await dotenv.load(fileName: ".env");
   runApp(const DiceApp());
 }
@@ -38,7 +37,6 @@ class _DicePageState extends State<DicePage>
   bool _isRolling = false;
   late AnimationController _controller;
 
-  // Получаем URL сервера из переменных окружения
   late final String _serverUrl =
       dotenv.env['SERVER_URL'] ?? 'http://localhost:8080';
 
