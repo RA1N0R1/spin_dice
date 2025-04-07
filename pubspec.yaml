@@ -1,23 +1,20 @@
-name: spin_dice
-description: "Игра в кубик с клиент-серверной архитектурой"
-version: 1.0.0
+name: dice_roller
+description: Клиент-серверное приложение для броска кубика
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
-  flutter: '>=3.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   http: ^1.1.0
   flutter_dotenv: ^5.1.0
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
 
 flutter:
-  uses-material-design: true
   assets:
     - .env

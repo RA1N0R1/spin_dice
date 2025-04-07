@@ -1,31 +1,164 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
-  runApp(const DiceApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final savedNickname = prefs.getString('nickname');
+
+  runApp(MaterialApp(
+    title: 'Spin Dice',
+    debugShowCheckedModeBanner: false,
+    theme: ThemeData(
+      primarySwatch: Colors.blue,
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+          textStyle: const TextStyle(fontSize: 20),
+        ),
+      ),
+    ),
+    home: savedNickname == null
+        ? const NicknameScreen()
+        : DicePage(nickname: savedNickname),
+  ));
 }
 
-class DiceApp extends StatelessWidget {
-  const DiceApp({super.key});
+class NicknameScreen extends StatefulWidget {
+  const NicknameScreen({super.key});
+
+  @override
+  State<NicknameScreen> createState() => _NicknameScreenState();
+}
+
+class _NicknameScreenState extends State<NicknameScreen> {
+  final TextEditingController _nicknameController = TextEditingController();
+
+  Widget _buildDiceFace() {
+    const double dotSize = 12;
+    const Color dotColor = Colors.black;
+
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(top: 20, left: 20, child: _buildDot(dotSize, dotColor)),
+          Center(child: _buildDot(dotSize, dotColor)),
+          Positioned(
+              bottom: 20, right: 20, child: _buildDot(dotSize, dotColor)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDot(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+
+  void _proceedToDicePage() async {
+    if (_nicknameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Введите никнейм!')),
+      );
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('nickname', _nicknameController.text);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DicePage(nickname: _nicknameController.text),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Dice Roller',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return Scaffold(
+      backgroundColor: Colors.grey[200],
+      appBar: AppBar(
+        title: const Text('Spin Dice - Вход'),
+        centerTitle: true,
       ),
-      home: const DicePage(),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildDiceFace(),
+              const SizedBox(height: 40),
+              TextField(
+                controller: _nicknameController,
+                decoration: InputDecoration(
+                  labelText: 'Ваш никнейм',
+                  labelStyle: const TextStyle(color: Colors.green),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.green, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.green, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 18),
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _proceedToDicePage,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                ),
+                child: const Text(
+                  'Играть',
+                  style: TextStyle(fontSize: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
 class DicePage extends StatefulWidget {
-  const DicePage({super.key});
+  final String nickname;
+  const DicePage({super.key, required this.nickname});
 
   @override
   State<DicePage> createState() => _DicePageState();
@@ -36,7 +169,6 @@ class _DicePageState extends State<DicePage>
   int _currentDiceValue = 1;
   bool _isRolling = false;
   late AnimationController _controller;
-
   late final String _serverUrl =
       dotenv.env['SERVER_URL'] ?? 'http://localhost:8080';
 
@@ -53,12 +185,6 @@ class _DicePageState extends State<DicePage>
       });
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   Future<void> _rollDice() async {
     if (_isRolling) return;
 
@@ -70,11 +196,13 @@ class _DicePageState extends State<DicePage>
       final response = await http.post(
         Uri.parse('$_serverUrl/roll'),
         headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'nickname': widget.nickname}),
       );
 
       if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
         setState(() {
-          _currentDiceValue = int.parse(response.body);
+          _currentDiceValue = responseData['value'];
         });
       } else {
         _fallbackRoll();
@@ -94,7 +222,6 @@ class _DicePageState extends State<DicePage>
   Widget _buildDiceFace(int value) {
     const double dotSize = 20;
     const Color dotColor = Colors.black;
-
     List<Widget> dots = [];
 
     switch (value) {
@@ -184,8 +311,22 @@ class _DicePageState extends State<DicePage>
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text('Dice Roller (Клиент-сервер)'),
+        title: const Text('Spin Dice'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, size: 30),
+            color: Colors.red,
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('nickname');
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const NicknameScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -220,6 +361,11 @@ class _DicePageState extends State<DicePage>
             Text(
               'Текущее значение: $_currentDiceValue',
               style: const TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Игрок: ${widget.nickname}',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
           ],
         ),
